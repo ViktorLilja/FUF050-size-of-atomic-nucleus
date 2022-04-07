@@ -24,6 +24,7 @@ def cs_mott(Z, E, theta):
 
 def formFactor(rho_Ch, q2, Z):
     # Form factor of nuclear charge density rho_Ch(r)
+    # rho_Ch(r) must be close to zero for r > 8e-15   
 
     # Sample r
     N = 1000
@@ -51,7 +52,7 @@ def theo_cs(rho_Ch, Z, E, theta):
     return F2 * cs_mott(Z, E, theta)
 
 
-# Test
+# Testing
 if __name__ == "__main__":
 
     deg = (2 * np.pi / 360) # One degree in radians

@@ -5,6 +5,24 @@ from crossections import *
 import pandas as pd
 import os
 
+# --- IMPORT DATA --- #
+
+# Experimental parameters
+E = 250e6 * pc.eV
+A = 40
+Z = 20
+
+# Get experimental data from file
+current_path = os.path.dirname(os.path.abspath(__file__))
+CSV_fileName = "data/experimentalData.csv"
+CSV_data     = pd.read_csv(current_path + "/" + CSV_fileName, sep=',')
+
+header    = CSV_data.columns.values
+exp_theta = np.array(CSV_data[header[0]]) * (np.pi / 180)
+exp_cs    = np.array(CSV_data[header[1]]) * (1e-3 * pc.barn)
+exp_error = np.array(CSV_data[header[2]]) * (1e-3 * pc.barn)
+
+
 # --- HELPER FUNCTIONS --- #
 
 def rho_Ch(r, X):
@@ -13,18 +31,9 @@ def rho_Ch(r, X):
     (rho0, a, b) = X
     return rho0 / (1 + np.exp((r-a)/b))
 
-def X_nuclear2si(X_nuclear):
-    # Helper function:
-    # Convert X from nuclear units to SI units
-    (rho0, a, b) = X_nuclear
-    rho0 *= pc.e * pc.fm**-3
-    a    *= pc.fm
-    b    *= pc.fm
-    X_si = (rho0, a, b)
-    return X_si
-
 def proton_count(rho_Ch):
     # Calculate charge density for a given charge distribution
+    # rho_Ch(r) must be close to zero for r > 8e-15   
     N = 1000
     r = np.linspace(0, 8, N) * pc.fm
 
@@ -36,6 +45,7 @@ def proton_count(rho_Ch):
 
 def rms_radius(rho_Ch):
     # Calculate rms radius for a given charge distribution
+    # rho_Ch(r) must be close to zero for r > 8e-15   
     N = 1000
     r = np.linspace(0, 8, N) * pc.fm
 
@@ -46,25 +56,17 @@ def rms_radius(rho_Ch):
     return np.sqrt(fact * integral)
 
 
-# --- IMPORT DATA --- #
-
-# Experimental parameters
-E = 250e6 * pc.eV
-A = 40
-Z = 20
-
-# Get experimental data from file
-current_path = os.path.dirname(os.path.abspath(__file__))
-CSV_fileName = "experimentalData.csv"
-CSV_data     = pd.read_csv(current_path + "/" + CSV_fileName, sep=',')
-
-header    = CSV_data.columns.values
-exp_theta = CSV_data[header[0]] * (np.pi / 180)
-exp_cs    = CSV_data[header[1]] * (1e-3 * pc.barn)
-exp_error = CSV_data[header[2]] * (1e-3 * pc.barn)
-
-
 # --- NUMERICAL OPTIMIZATION --- #
+
+def X_nuclear2si(X_nuclear):
+    # Helper function:
+    # Convert X from nuclear units to SI units
+    (rho0, a, b) = X_nuclear
+    rho0 *= pc.e * pc.fm**-3
+    a    *= pc.fm
+    b    *= pc.fm
+    X_si = (rho0, a, b)
+    return X_si
 
 def chi2(X_nuclear):
     # chi2 error funtion to be minimized
@@ -89,7 +91,7 @@ def chi2(X_nuclear):
 
 # Initial guess
 rho0  = 0.0743             # [e/fm3]
-a0    = 3.77              # [fm]
+a0    = 3.77               # [fm]
 b0    = 0.538              # [fm]
 X0 = (rho0, a0, b0)
 
@@ -127,8 +129,9 @@ print("Calculated RMS radius %f fm, relative error %.2f%%"
 # Plot cross section
 deg = (2 * np.pi / 360) # One degree in radians
 theta = np.linspace(30, 130, 500) * deg
+cs_star = theo_cs(rho_Ch_star, Z, E, theta)
 plt.plot(theta / deg, 
-         theo_cs(rho_Ch_star, Z, E, theta) / (1e-3 * pc.barn),
+         cs_star / (1e-3 * pc.barn),
          "k--")
 plt.errorbar(exp_theta / deg, 
              exp_cs / (1e-3 * pc.barn), 
@@ -150,4 +153,24 @@ plt.xlabel("radius (fm)")
 plt.show()
 
 
+# --- EXPORT RESULT TO CSV --- #
+with open('sizeofnucleus/output/result.csv', 'w') as f:
+    # Header:
+    f.write("exp_theta (deg),exp_cs (mb/sr),exp_error (mb/sr),fit_theta (deg),fit_cs (mb/sr),r (fm),rho_Ch (e/fm3)\n")
+    rows = max(len(exp_theta), len(theta), len(r))
+    for i in range(0, rows):
+        if (len(exp_theta)      > i) : f.write("%.5f" % (exp_theta[i] / deg))
+        f.write(",")
+        if (len(exp_cs)         > i) : f.write("%.5f" % (exp_cs[i] / (1e-3 * pc.barn)))
+        f.write(",")
+        if (len(exp_error)      > i) : f.write("%.5f" % (exp_error[i] / (1e-3 * pc.barn)))
+        f.write(",")
+        if (len(theta)          > i) : f.write("%.5f" % (theta[i] / deg))
+        f.write(",")
+        if (len(cs_star)        > i) : f.write("%.5f" % (cs_star[i] / (1e-3 * pc.barn)))
+        f.write(",")
+        if (len(r)              > i) : f.write("%.5f" % (r[i] / pc.fm))
+        f.write(",")
+        if (len(rho_Ch_star(r)) > i) : f.write("%.5f" % (rho_Ch_star(r)[i] / (pc.e * pc.fm**-3)))
+        f.write("\n")
 
