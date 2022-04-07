@@ -1,9 +1,15 @@
+# Table of physical constants and commonly used units
+# in nuclear physics expressed in SI units.
+
+# Source:   Nuclear and Particle Physics : An Introduction
+#           by Brian R. Martin and Graham Shaw (2019)
+#           3rd Edition
+
 # Units
-eV     = 1.6022e-19         # One electron volt in Joules
+eV     = 1.6022e-19         # electron volt
 eV_c2  = 1.7827e-36         # eV/c2 in kg
 barn   = 1e-28              # barn
 fm     = 1e-15              # fermi meter
-
 
 # Physical constants
 c      = 2.99792e8          # Speed of light in vacuum
