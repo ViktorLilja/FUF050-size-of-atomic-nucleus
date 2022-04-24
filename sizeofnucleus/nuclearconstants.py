@@ -9,7 +9,7 @@
 eV     = 1.6022e-19         # electron volt
 eV_c2  = 1.7827e-36         # eV/c2 in kg
 barn   = 1e-28              # barn
-fm     = 1e-15              # fermi meter
+fm     = 1e-15              # fermi (femtometer)
 
 # Physical constants
 c      = 2.99792e8          # Speed of light in vacuum
